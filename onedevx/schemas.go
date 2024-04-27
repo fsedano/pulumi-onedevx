@@ -1,17 +1,30 @@
 package main
 
+// Common headers
 type OneDevxCRD struct {
 	ApiVersion string             `yaml:"apiVersion"`
 	Kind       string             `yaml:"kind"`
 	Metadata   OneDevxCRDMetadata `yaml:"metadata"`
 }
 
+type OneDevxCRDMetadata struct {
+	Name string `yaml:"name"`
+}
+
+// Components
+
 type OneDevxComponentCRD struct {
 	OneDevxCRD `yaml:",inline"`
 	Spec       OneDevxComponentSpec `yaml:"spec"`
 }
-type OneDevxCRDMetadata struct {
-	Name string `yaml:"name"`
+
+type OneDevxComponentSpec struct {
+	ComponentType string                `yaml:"componentType"`
+	HelmInfo      OneDevxComponentHelm  `yaml:"helmInfo"`
+	ImageInfo     OneDevxComponentImage `yaml:"imageInfo"`
+
+	RestSchema   OneDevxRestSchema `yaml:"restSchema"`
+	Dependencies []string          `yaml:"dependencies"`
 }
 
 type OneDevxRestSchema struct {
@@ -26,14 +39,6 @@ type OneDevxComponentHelm struct {
 
 type OneDevxComponentImage struct {
 	ImageName string `yaml:"imageName"`
-}
-type OneDevxComponentSpec struct {
-	ComponentType string                `yaml:"componentType"`
-	HelmInfo      OneDevxComponentHelm  `yaml:"helmInfo"`
-	ImageInfo     OneDevxComponentImage `yaml:"imageInfo"`
-
-	RestSchema   OneDevxRestSchema `yaml:"restSchema"`
-	Dependencies []string          `yaml:"dependencies"`
 }
 
 // Workspec
