@@ -1,0 +1,12 @@
+apiVersion: devx.cisco.com/alpha1
+kind: Component
+metadata:
+  name: comp2
+spec:
+  componentType: image
+  imageInfo:
+    imageName: docker.io/fsedano/comp1
+  restSchema:
+    - /c2
+  dependencies:
+    - github.com/fsedano/comp_redis

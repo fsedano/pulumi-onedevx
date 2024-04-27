@@ -1,0 +1,8 @@
+apiVersion: devx.cisco.com/alpha1
+kind: Component
+metadata:
+  name: comp-helm
+spec:
+  componentType: helm
+  helmInfo:
+    chartName: redis

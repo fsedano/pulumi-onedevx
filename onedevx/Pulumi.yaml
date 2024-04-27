@@ -1,0 +1,7 @@
+name: onedevx-home
+runtime: go
+description: Onedevx Test
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: kubernetes-go
