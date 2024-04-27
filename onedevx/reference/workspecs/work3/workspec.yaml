@@ -1,0 +1,8 @@
+apiVersion: devx.cisco.com/alpha1
+kind: Workspec
+metadata:
+  name: wsdemo3
+spec:
+  componentList:
+    - type: directory
+      path: reference/components/comp4

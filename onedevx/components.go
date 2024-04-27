@@ -16,7 +16,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func walkComponents(ctx *pulumi.Context, ns string, path string, prefixRoute string) error {
+func walkComponents(ctx *pulumi.Context, ns string, path string, prefixRoute string, workspecName string) error {
 	// Walk all directories for components
 	err := filepath.Walk(path, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
@@ -25,7 +25,7 @@ func walkComponents(ctx *pulumi.Context, ns string, path string, prefixRoute str
 
 		if !info.IsDir() {
 			if info.Name() == "component.yaml" {
-				err := installComponent(ctx, ns, path, prefixRoute)
+				err := installComponent(ctx, ns, path, prefixRoute, workspecName)
 				if err != nil {
 					return err
 				}
@@ -37,7 +37,7 @@ func walkComponents(ctx *pulumi.Context, ns string, path string, prefixRoute str
 }
 
 // Install the component in the specified path. Supported types are helm or image
-func installComponent(ctx *pulumi.Context, ns string, componentPath string, prefixRoute string) error {
+func installComponent(ctx *pulumi.Context, ns string, componentPath string, prefixRoute string, workspecName string) error {
 	yamlFile, err := os.ReadFile(componentPath)
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ func installComponent(ctx *pulumi.Context, ns string, componentPath string, pref
 	case "helm":
 		deployHelmComponent(ctx, ns, component)
 	case "image":
-		deployImageComponent(ctx, ns, prefixRoute, component)
+		deployImageComponent(ctx, ns, prefixRoute, component, workspecName)
 	default:
 		return fmt.Errorf("unsupported component type: %s", component.Spec.ComponentType)
 	}
@@ -85,7 +85,7 @@ func deployHelmComponent(ctx *pulumi.Context, ns string, component OneDevxCompon
 // If port is specified it will create a service
 // If API list is specified it will create Ingress Routes
 // Ingress routes will be prefixed with workspec name
-func deployImageComponent(ctx *pulumi.Context, ns string, prefixRoute string, component OneDevxComponentCRD) error {
+func deployImageComponent(ctx *pulumi.Context, ns string, prefixRoute string, component OneDevxComponentCRD, workspecName string) error {
 	appLabels := pulumi.StringMap{
 		"onedevxComponent": pulumi.String(component.Metadata.Name),
 	}
@@ -109,6 +109,16 @@ func deployImageComponent(ctx *pulumi.Context, ns string, prefixRoute string, co
 						corev1.ContainerArgs{
 							Name:  pulumi.String(component.Metadata.Name),
 							Image: pulumi.String(component.Spec.ImageInfo.ImageName),
+							Env: corev1.EnvVarArray{
+								&corev1.EnvVarArgs{
+									Name:  pulumi.String("onedevx-component"),
+									Value: pulumi.String(component.Metadata.Name),
+								},
+								&corev1.EnvVarArgs{
+									Name:  pulumi.String("onedevx-workspec"),
+									Value: pulumi.String(workspecName),
+								},
+							},
 						}},
 				},
 			},
