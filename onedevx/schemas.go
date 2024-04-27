@@ -1,12 +1,15 @@
 package main
 
 type OneDevxCRD struct {
-	ApiVersion string               `yaml:"apiVersion"`
-	Kind       string               `yaml:"kind"`
-	Metadata   OneDevxCRDMetadata   `yaml:"metadata"`
-	Spec       OneDevxComponentSpec `yaml:"spec"`
+	ApiVersion string             `yaml:"apiVersion"`
+	Kind       string             `yaml:"kind"`
+	Metadata   OneDevxCRDMetadata `yaml:"metadata"`
 }
 
+type OneDevxComponentCRD struct {
+	OneDevxCRD `yaml:",inline"`
+	Spec       OneDevxComponentSpec `yaml:"spec"`
+}
 type OneDevxCRDMetadata struct {
 	Name string `yaml:"name"`
 }
@@ -31,4 +34,18 @@ type OneDevxComponentSpec struct {
 
 	RestSchema   OneDevxRestSchema `yaml:"restSchema"`
 	Dependencies []string          `yaml:"dependencies"`
+}
+
+// Workspec
+
+type OneDevxWorkspecSpec struct {
+	ComponentList []struct {
+		Type string `yaml:"type"`
+		Path string `yaml:"path"`
+	} `yaml:"componentList"`
+}
+
+type OneDevxWorkspecCRD struct {
+	OneDevxCRD `yaml:",inline"`
+	Spec       OneDevxWorkspecSpec `yaml:"spec"`
 }

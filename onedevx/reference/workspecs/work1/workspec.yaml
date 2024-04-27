@@ -1,0 +1,12 @@
+apiVersion: devx.cisco.com/alpha1
+kind: Workspec
+metadata:
+  name: ws1
+spec:
+  componentList:
+    - type: directory
+      path: reference/components/comp1
+    - type: directory
+      path: reference/components/comp2
+    - type: git
+      path: reference/components/comp4
