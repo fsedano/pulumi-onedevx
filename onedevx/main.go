@@ -165,7 +165,7 @@ func deployImageComponent(ctx *pulumi.Context, ns string, component OneDevxCRD) 
 			"spec": pulumi.Map{
 				"stripPrefix": pulumi.Map{
 					"prefixes": pulumi.StringArray{
-						pulumi.String(component.Metadata.Name),
+						pulumi.String(fmt.Sprintf("/%s", component.Metadata.Name)),
 					},
 				},
 			},
@@ -182,7 +182,7 @@ func deployImageComponent(ctx *pulumi.Context, ns string, component OneDevxCRD) 
 			Name:      pulumi.String(component.Metadata.Name),
 			Namespace: pulumi.String(ns),
 			Annotations: pulumi.StringMap{
-				"traefix.ingress.kubernetes.io/router.middlewares": pulumi.String(fmt.Sprintf("%s-%s@kubernetescrd", ns, component.Metadata.Name)),
+				"traefik.ingress.kubernetes.io/router.middlewares": pulumi.String(fmt.Sprintf("%s-%s@kubernetescrd", ns, component.Metadata.Name)),
 			},
 		},
 		OtherFields: kubernetes.UntypedArgs{
@@ -194,6 +194,12 @@ func deployImageComponent(ctx *pulumi.Context, ns string, component OneDevxCRD) 
 					pulumi.Map{
 						"kind":  pulumi.String("Rule"),
 						"match": pulumi.String(fmt.Sprintf("Path(`/%s/ping`)", component.Metadata.Name)),
+						"middlewares": pulumi.MapArray{
+							pulumi.Map{
+								"name":      pulumi.String(component.Metadata.Name),
+								"namespace": pulumi.String(ns),
+							},
+						},
 						"services": pulumi.MapArray{
 							pulumi.Map{
 								"kind": pulumi.String("Service"),
