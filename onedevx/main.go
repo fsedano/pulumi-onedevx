@@ -6,8 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes"
+	apiextensions "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/apiextensions"
 	appsv1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/apps/v1"
 	corev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
+	helmv3 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/helm/v3"
 	metav1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/meta/v1"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"gopkg.in/yaml.v3"
@@ -71,20 +74,34 @@ func installComponent(ctx *pulumi.Context, ns string, componentPath string) erro
 	default:
 		return fmt.Errorf("error on component type: %s", component.Spec.ComponentType)
 	}
-	//ctx.Export("name", deployment.Metadata.Name())
-	//ctx.Export("component", pulumi.String(component.Metadata.Name))
 	return nil
 }
 
 func deployHelmComponent(ctx *pulumi.Context, ns string, component OneDevxCRD) error {
-	ctx.Log.Warn("helm is unsupported", nil)
-	return fmt.Errorf("helm unsupported")
+
+	_, err := helmv3.NewRelease(ctx, component.Metadata.Name, &helmv3.ReleaseArgs{
+		Chart:     pulumi.String(component.Spec.HelmInfo.ChartName),
+		Namespace: pulumi.String(ns),
+
+		RepositoryOpts: &helmv3.RepositoryOptsArgs{
+			Repo: pulumi.String(component.Spec.HelmInfo.ChartRepo),
+		},
+
+		Version: pulumi.String(component.Spec.HelmInfo.ChartVersion),
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+
 }
 
 func deployImageComponent(ctx *pulumi.Context, ns string, component OneDevxCRD) error {
 	appLabels := pulumi.StringMap{
 		"onedevxComponent": pulumi.String(component.Metadata.Name),
 	}
+
+	// Deployment
 	_, err := appsv1.NewDeployment(ctx, fmt.Sprintf("onedevx-%s", component.Metadata.Name), &appsv1.DeploymentArgs{
 		Metadata: &metav1.ObjectMetaArgs{
 			Namespace: pulumi.String(ns),
@@ -111,5 +128,87 @@ func deployImageComponent(ctx *pulumi.Context, ns string, component OneDevxCRD) 
 	if err != nil {
 		return err
 	}
+
+	// Service
+	_, err = corev1.NewService(ctx, component.Metadata.Name, &corev1.ServiceArgs{
+		Metadata: &metav1.ObjectMetaArgs{
+			Name:      pulumi.String(component.Metadata.Name),
+			Namespace: pulumi.String(ns),
+		},
+		Spec: &corev1.ServiceSpecArgs{
+			Ports: corev1.ServicePortArray{
+				&corev1.ServicePortArgs{
+					Port:       pulumi.Int(80),
+					TargetPort: pulumi.Int(component.Spec.RestSchema.Port),
+					Protocol:   pulumi.String("TCP"),
+				},
+			},
+			Selector: pulumi.StringMap{
+				"onedevxComponent": pulumi.String(component.Metadata.Name),
+			},
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// Middleware
+	_, err = apiextensions.NewCustomResource(ctx, component.Metadata.Name, &apiextensions.CustomResourceArgs{
+		ApiVersion: pulumi.String("traefik.io/v1alpha1"),
+		Kind:       pulumi.String("Middleware"),
+		Metadata: &metav1.ObjectMetaArgs{
+			Name:      pulumi.String(component.Metadata.Name),
+			Namespace: pulumi.String(ns),
+		},
+		OtherFields: kubernetes.UntypedArgs{
+			"spec": pulumi.Map{
+				"stripPrefix": pulumi.Map{
+					"prefixes": pulumi.StringArray{
+						pulumi.String(component.Metadata.Name),
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	// IngressRoute
+	_, err = apiextensions.NewCustomResource(ctx, component.Metadata.Name, &apiextensions.CustomResourceArgs{
+		ApiVersion: pulumi.String("traefik.io/v1alpha1"),
+		Kind:       pulumi.String("IngressRoute"),
+		Metadata: &metav1.ObjectMetaArgs{
+			Name:      pulumi.String(component.Metadata.Name),
+			Namespace: pulumi.String(ns),
+			Annotations: pulumi.StringMap{
+				"traefix.ingress.kubernetes.io/router.middlewares": pulumi.String(fmt.Sprintf("%s-%s@kubernetescrd", ns, component.Metadata.Name)),
+			},
+		},
+		OtherFields: kubernetes.UntypedArgs{
+			"spec": pulumi.Map{
+				"entryPoints": pulumi.StringArray{
+					pulumi.String("web"),
+				},
+				"routes": pulumi.MapArray{
+					pulumi.Map{
+						"kind":  pulumi.String("Rule"),
+						"match": pulumi.String(fmt.Sprintf("Path(`/%s/ping`)", component.Metadata.Name)),
+						"services": pulumi.MapArray{
+							pulumi.Map{
+								"kind": pulumi.String("Service"),
+								"name": pulumi.String(component.Metadata.Name),
+								"port": pulumi.Int(80),
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

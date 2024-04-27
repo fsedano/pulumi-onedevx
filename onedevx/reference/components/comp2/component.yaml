@@ -7,6 +7,8 @@ spec:
   imageInfo:
     imageName: docker.io/fsedano/comp1
   restSchema:
-    - /c2
+    port: 8080
+    entries:
+      - /c2
   dependencies:
     - github.com/fsedano/comp_redis

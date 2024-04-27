@@ -5,4 +5,6 @@ metadata:
 spec:
   componentType: helm
   helmInfo:
-    chartName: redis
+    chartName: oci://registry-1.docker.io/bitnamicharts/redis
+    chartRepo: 
+    chartVersion: "19.1.3"

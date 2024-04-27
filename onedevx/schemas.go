@@ -11,8 +11,14 @@ type OneDevxCRDMetadata struct {
 	Name string `yaml:"name"`
 }
 
+type OneDevxRestSchema struct {
+	Port    int      `yaml:"port"`
+	Entries []string `yaml:"entries"`
+}
 type OneDevxComponentHelm struct {
-	ChartName string `yaml:"chartName"`
+	ChartName    string `yaml:"chartName"`
+	ChartRepo    string `yaml:"chartRepo"`
+	ChartVersion string `yaml:"chartVersion"`
 }
 
 type OneDevxComponentImage struct {
@@ -23,6 +29,6 @@ type OneDevxComponentSpec struct {
 	HelmInfo      OneDevxComponentHelm  `yaml:"helmInfo"`
 	ImageInfo     OneDevxComponentImage `yaml:"imageInfo"`
 
-	RestSchema   []string `yaml:"restSchema"`
-	Dependencies []string `yaml:"dependencies"`
+	RestSchema   OneDevxRestSchema `yaml:"restSchema"`
+	Dependencies []string          `yaml:"dependencies"`
 }
