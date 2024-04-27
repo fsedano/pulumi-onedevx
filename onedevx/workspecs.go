@@ -47,7 +47,7 @@ func installWorkspec(ctx *pulumi.Context, ns string, path string) error {
 		ctx.Log.Info(fmt.Sprintf("Processing component %s", comp.Path), nil)
 		switch comp.Type {
 		case "directory":
-			err = walkComponents(ctx, ns, comp.Path)
+			err = walkComponents(ctx, ns, comp.Path, ws.Metadata.Name)
 			if err != nil {
 				return err
 			}
