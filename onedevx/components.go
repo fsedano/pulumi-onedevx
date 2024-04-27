@@ -64,13 +64,12 @@ func installComponent(ctx *pulumi.Context, ns string, componentPath string, pref
 func deployHelmComponent(ctx *pulumi.Context, ns string, component OneDevxComponentCRD) error {
 
 	_, err := helmv3.NewRelease(ctx, component.Metadata.Name, &helmv3.ReleaseArgs{
-		Chart:     pulumi.String(component.Spec.HelmInfo.ChartName),
-		Namespace: pulumi.String(ns),
-
+		Chart:           pulumi.String(component.Spec.HelmInfo.ChartName),
+		Namespace:       pulumi.String(ns),
+		CreateNamespace: pulumi.Bool(true),
 		RepositoryOpts: &helmv3.RepositoryOptsArgs{
 			Repo: pulumi.String(component.Spec.HelmInfo.ChartRepo),
 		},
-
 		Version: pulumi.String(component.Spec.HelmInfo.ChartVersion),
 	})
 	if err != nil {
