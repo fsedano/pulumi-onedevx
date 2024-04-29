@@ -1,0 +1,17 @@
+apiVersion: pulumi.com/v1
+kind: Stack
+metadata:
+  name: mio-stack
+spec:
+  envRefs:
+    PULUMI_ACCESS_TOKEN:
+      type: Secret
+      secret:
+        name: pulumi-api-secret
+        key: accessToken
+  stack: fsedano/onedevx-home/dev
+  projectRepo: https://github.com/fsedano/pulumi-onedevx
+  repoDir: /onedevx
+  branch: "refs/heads/master"
+  destroyOnFinalize: true
+  retryOnUpdateConflict: true

@@ -1,0 +1,17 @@
+
+apiVersion: pulumi.com/v1
+kind: Stack
+metadata:
+  name: nginx-k8s-stack
+spec:
+  envRefs:
+    PULUMI_ACCESS_TOKEN:
+      type: Secret
+      secret:
+        name: pulumi-api-secret
+        key: accessToken
+  stack: fsedano/k8s-nginx/dev
+  projectRepo: https://github.com/pulumi/examples
+  repoDir: /kubernetes-ts-nginx
+  branch: "refs/heads/master"
+  destroyOnFinalize: true
