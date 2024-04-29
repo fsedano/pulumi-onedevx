@@ -1,6 +1,8 @@
 name: onedevx-home
 runtime: go
 description: Onedevx Test
+backend:
+  url: s3://defaulttenant-hl/pulumi?region=us-east-1&endpoint=http://default:9943
 config:
   pulumi:tags:
     value:
